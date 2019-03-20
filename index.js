@@ -1,6 +1,15 @@
 const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
+const _ = require('lodash');
+
+// module variables
+const config = require('./config.json');
+const defaultConfig = config.development;
+const environment = process.env.NODE_ENV || 'development';
+const environmentConfig = config[environment];
+const finalConfig = _.merge(defaultConfig, environmentConfig);
+global.gConfig = finalConfig;
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
@@ -109,8 +118,8 @@ function activateCamera(blinkCreds, datesToExclude) {
             }
 
             // BUT we should turn it on at night
-            var startTime = '07:00:00';
-            var endTime = '19:00:00';
+            var startTime = global.gConfig.dayStartTime;
+            var endTime = global.gConfig.dayEndTime;
 
             startDate = new Date(dateNow.getTime());
             startDate.setHours(startTime.split(":")[0]);
@@ -184,13 +193,12 @@ function getEvents(auth) {
           events.map((event, i) => {
             const start = event.start.dateTime || event.start.date;
             const end = event.end.dateTime || event.end.date;
-            if (event.summary.toLowerCase().indexOf('wales') < 0
-            && event.summary.toLowerCase().indexOf('scotland') < 0
-            && event.summary.toLowerCase().indexOf('ireland') < 0
-            && event.summary.toLowerCase().indexOf('george') < 0
-            && event.summary.toLowerCase().indexOf('guy fawkes') < 0
-            && event.summary.toLowerCase().indexOf('halloween') < 0
-            && event.summary.toLowerCase().indexOf('birthday') < 0) {
+            
+            var found = global.gConfig.holidaysToExclude.find(function(str) {
+              return event.summary.toLowerCase().indexOf(str) >= 0 ? true : false;
+            });
+
+            if (typeof found === "undefined") {
               datesToExclude.push({startDate: new Date(start), endDate: new Date(end)});
             }
           });
