@@ -142,10 +142,20 @@ function activateCamera(blinkCreds, datesToExclude) {
 
             Object.keys(blink.idTable).forEach(cameraId => {
               let cameraName = blink.idTable[cameraId];
+              if (cameraName == 'Peter') {
+                let camera = blink.cameras[cameraId];
+                var tempCent = (camera.temperature - 32) * (5/9);
+                console.log(cameraName + ' camera temperature is ' + tempCent);
+              }
+              if (cameraName == 'Utility') {
+                let camera = blink.cameras[cameraId];
+                var tempCent = (camera.temperature - 32) * (5/9);
+                console.log(cameraName + ' camera temperature is ' + tempCent);
+              }
               if (cameraName == 'Outside') {
                 let camera = blink.cameras[cameraId];
                 console.log('Turning camera ' + (camOn ? 'on': 'off'));
-                camera.setMotionDetect(true);
+                camera.setMotionDetect(camOn);
               }
             });
           }, (error) => {
