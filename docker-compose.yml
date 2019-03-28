@@ -1,4 +1,4 @@
-version: '3'
+version: '2'
 
 services:
   tasker:
@@ -9,8 +9,8 @@ services:
       configuration: |
         logging:
           level:
-            ROOT: WARN
-            org.springframework.web: WARN
+            ROOT: DEBUG
+            org.springframework.web: DEBUG
             sh.strm: DEBUG
         schedule:
           - every: hour
