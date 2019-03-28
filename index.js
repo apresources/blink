@@ -2,6 +2,10 @@ const fs = require('fs');
 const readline = require('readline');
 const {google} = require('googleapis');
 const _ = require('lodash');
+const Blink = require('node-blink-security');
+const { login } = require('tplink-cloud-api');
+// Mongo stuff
+const MongoClient = require('mongodb').MongoClient;
 
 // module variables
 const config = require('./config.json');
@@ -40,7 +44,7 @@ function authorize(credentials, callback) {
   fs.readFile(TOKEN_PATH, (err, token) => {
     if (err) return getAccessToken(oAuth2Client, callback);
     oAuth2Client.setCredentials(JSON.parse(token));
-    callback(oAuth2Client, credentials.blink);
+    callback(oAuth2Client, credentials.blink, credentials.tplink, credentials.mongo);
   });
 }
 
@@ -79,11 +83,51 @@ function getAccessToken(oAuth2Client, callback) {
  * Lists the next 10 events on the user's primary calendar.
  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
  */
-async function mainLoop(auth, blinkCreds) {
+async function mainLoop(auth, blinkCreds, tplinkCreds, mongoCreds) {
   
   try {
     let datesToExclude = await getEvents(auth);
-    await activateCamera(blinkCreds, datesToExclude);
+    let temps = await activateCamera(blinkCreds, datesToExclude);
+    var weather = require('weather-js');
+    weather.find({search: 'Sutton Coldfield', degreeType: 'C'}, async function(err, result) {
+      if(err) console.log(err);
+      temps['Weather'] = parseFloat(result[0].current.temperature);
+      temps['Timestamp'] = new Date();
+      console.log(temps);
+      const url = 'mongodb://' + mongoCreds.user + ':' + mongoCreds.password + '@blink_mongo_1:27017';
+      // Database Name
+      const dbName = 'blink';
+      
+      // Create a new MongoClient
+      const client = new MongoClient(url, { useNewUrlParser: true });
+      
+      // Use connect method to connect to the Server
+      try {
+        await client.connect();
+        const db = client.db(dbName);
+        let r = await db.collection('temperatures').insertOne(temps);
+      }
+      catch(err) {
+        console.log(err.stack);
+      }
+
+      client.close();
+
+    });
+    // const tplink = await login(tplinkCreds.username, tplinkCreds.password);
+    // let deviceList = await tplink.getDeviceList();
+    // for (var dev of deviceList) {
+    //   console.log(dev.alias);
+    //   let myPlug = tplink.getHS100(dev.alias);
+    //   try {
+    //     var state = await myPlug.getRelayState();
+    //     console.log(state);
+    //   }
+    //   catch(err) {
+    //     console.log(err.response.data.msg);
+    //   }
+    // }
+    
   }
   catch(err) {
     console.log('ERROR: ' + err);
@@ -93,7 +137,6 @@ async function mainLoop(auth, blinkCreds) {
 
 function activateCamera(blinkCreds, datesToExclude) {
   return new Promise((resolve, reject) => {
-    const Blink = require('node-blink-security');
     var blink = new Blink(blinkCreds.email, blinkCreds.password);
     blink.setupSystem()
           .then(() => {
@@ -139,25 +182,18 @@ function activateCamera(blinkCreds, datesToExclude) {
               console.log('Is nighttime');
               camOn = true;
             }
-
+            
+            var temps = {};
             Object.keys(blink.idTable).forEach(cameraId => {
               let cameraName = blink.idTable[cameraId];
-              if (cameraName == 'Peter') {
-                let camera = blink.cameras[cameraId];
-                var tempCent = (camera.temperature - 32) * (5/9);
-                console.log(cameraName + ' camera temperature is ' + tempCent);
-              }
-              if (cameraName == 'Utility') {
-                let camera = blink.cameras[cameraId];
-                var tempCent = (camera.temperature - 32) * (5/9);
-                console.log(cameraName + ' camera temperature is ' + tempCent);
-              }
+              let camera = blink.cameras[cameraId];
               if (cameraName == 'Outside') {
-                let camera = blink.cameras[cameraId];
                 console.log('Turning camera ' + (camOn ? 'on': 'off'));
                 camera.setMotionDetect(camOn);
               }
+              temps[cameraName] = (camera.temperature - 32) * (5/9);
             });
+            resolve(temps);
           }, (error) => {
             reject(error);
           });
@@ -216,5 +252,20 @@ function getEvents(auth) {
         resolve(datesToExclude);
       }); 
     });
+  });
+}
+
+const insertDocument = function(db, callback, document) {
+  // Get the documents collection
+  const collection = db.collection('documents');
+  // Insert some documents
+  collection.insertMany([
+    {a : 1}, {a : 2}, {a : 3}
+  ], function(err, result) {
+    assert.equal(err, null);
+    assert.equal(3, result.result.n);
+    assert.equal(3, result.ops.length);
+    console.log("Inserted 3 documents into the collection");
+    callback(result);
   });
 }

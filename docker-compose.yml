@@ -19,10 +19,32 @@ services:
           docker:
             - name: blink
               image: blink-img:latest
+              network: blink_default
               # volumes:
               #   - /Users/apeters/apps/blink/secrets:/usr/src/secrets
               script:
                 - node index.js
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME_FILE: /var/run/secrets/mongouser.txt
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /var/run/secrets/mongopassword.txt
+    volumes:
+      - mongodata:/data/db
+      - ./secrets:/var/run/secrets
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: AEdkK%InNcw1qtfGuT99
+
+volumes:
+  mongodata:
 
   # blink:
   #   build: .
