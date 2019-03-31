@@ -24,6 +24,9 @@ services:
               #   - /Users/apeters/apps/blink/secrets:/usr/src/secrets
               script:
                 - node index.js
+    depends_on:
+      - mongo
+      
   mongo:
     image: mongo
     restart: always
@@ -39,9 +42,15 @@ services:
     restart: always
     ports:
       - 8081:8081
+    links:
+      - mongo:mongo
     environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: AEdkK%InNcw1qtfGuT99
+      ME_CONFIG_MONGODB_ADMINUSERNAME_FILE: /node_modules/mongo-express/secrets/mongouser.txt
+      ME_CONFIG_MONGODB_ADMINPASSWORD_FILE: /node_modules/mongo-express/secrets/mongopassword.txt
+    volumes:
+      - ./secrets:/node_modules/mongo-express/secrets
+    depends_on:
+      - mongo
 
 volumes:
   mongodata:
