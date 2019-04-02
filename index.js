@@ -26,7 +26,7 @@ var schedule = require('node-schedule');
 
 console.log('Starting schedule');
 
-var j = schedule.scheduleJob('* 1 * * *', function() {
+var j = schedule.scheduleJob('0 * * * *', function() {
   // Load client secrets from a local file.
   fs.readFile('/usr/src/secrets/credentials.json', (err, content) => {
     if (err) return console.log('Error loading client secret file:', err);
