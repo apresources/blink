@@ -8,16 +8,13 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 # Install app dependencies
-COPY package.json /usr/src/app/
+COPY package.json /usr/src/app
 RUN npm install
-
-# Bundle app source
-COPY . /usr/src/app
 
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 # where available (npm@5+)
 COPY secrets/*.json /usr/src/secrets/
-COPY index.js .
+COPY config.json /usr/src/app
+COPY index.js /usr/src/app
 
-
-#CMD [ "node", "index.js" ]
+CMD [ "node", "index.js" ]

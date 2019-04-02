@@ -22,11 +22,17 @@ const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
 // time.
 const TOKEN_PATH = '/usr/src/secrets/token.json';
 
-// Load client secrets from a local file.
-fs.readFile('/usr/src/secrets/credentials.json', (err, content) => {
-  if (err) return console.log('Error loading client secret file:', err);
-  // Authorize a client with credentials, then call the Google Calendar API.
-  authorize(JSON.parse(content), mainLoop);
+var schedule = require('node-schedule');
+
+console.log('Starting schedule');
+
+var j = schedule.scheduleJob('* 1 * * *', function() {
+  // Load client secrets from a local file.
+  fs.readFile('/usr/src/secrets/credentials.json', (err, content) => {
+    if (err) return console.log('Error loading client secret file:', err);
+    // Authorize a client with credentials, then call the Google Calendar API.
+    authorize(JSON.parse(content), mainLoop);
+  });
 });
 
 /**
