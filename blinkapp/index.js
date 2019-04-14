@@ -100,7 +100,7 @@ async function mainLoop(auth, blinkCreds, tplinkCreds, mongoCreds) {
       temps['Weather'] = parseFloat(result[0].current.temperature);
       temps['Timestamp'] = new Date();
       console.log(temps);
-      const url = 'mongodb://' + mongoCreds.user + ':' + mongoCreds.password + '@blink_mongo_1:27017';
+      const url = 'mongodb://' + mongoCreds.user + ':' + mongoCreds.password + '@mongo:27017';
       // Database Name
       const dbName = 'blink';
       

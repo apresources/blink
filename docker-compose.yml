@@ -1,35 +1,39 @@
 version: '3'
 
 services:
-  blink:
-    build: .
+  blinkapp:
+    build:
+      context: ./
+      dockerfile: ./blinkapp/Dockerfile
     image: blink-img:latest
-
-  # tasker:
-  #   image: strm/tasker
-  #   volumes:
-  #     - "/var/run/docker.sock:/var/run/docker.sock"
-  #   environment:
-  #     configuration: |
-  #       logging:
-  #         level:
-  #           ROOT: WARN
-  #           org.springframework.web: WARN
-  #           sh.strm: DEBUG
-  #       schedule:
-  #         - every: hour
-  #           task: blink
-  #       tasks:
-  #         docker:
-  #           - name: blink
-  #             image: blink-img:latest
-  #             network: blink_default
-  #             # volumes:
-  #             #   - /Users/apeters/apps/blink/secrets:/usr/src/secrets
-  #             script:
-  #               - node index.js
-  #   depends_on:
-  #     - mongo
+    links:
+      - mongo:mongo
+    networks:
+        - blinkappsnetwork
+  
+  graphapp-client:
+    build: ./graphapp-client
+    image: graphapp-client
+    ports:
+        - "3000:3000"
+    volumes:
+        - ./client:/client
+    links:
+        - graphapp-api
+    networks:
+        - blinkappsnetwork
+        
+  graphapp-api:
+    build: ./graphapp-api
+    image: graphapp-api:latest
+    ports:
+        - "9000:9000"
+    volumes:
+        - ./api:/api
+    depends_on:
+        - mongo
+    networks:
+        - blinkappsnetwork
 
   mongo:
     image: mongo
@@ -40,6 +44,8 @@ services:
     volumes:
       - mongodata:/data/db
       - ./secrets:/var/run/secrets
+    networks:
+        - blinkappsnetwork
 
   mongo-express:
     build: ./mongo-express
@@ -56,6 +62,14 @@ services:
       - ./secrets:/node_modules/mongo-express/secrets
     depends_on:
       - mongo
+    networks:
+        - blinkappsnetwork
 
 volumes:
   mongodata:
+
+networks:
+  blinkappsnetwork:
+    driver: bridge
+
+ 
