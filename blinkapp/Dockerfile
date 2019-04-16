@@ -1,6 +1,6 @@
 FROM node:8-alpine
 
-# Create app directory
+# Create secrets directory
 RUN mkdir -p /usr/src/secrets
 
 # Create app directory
