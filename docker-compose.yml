@@ -7,6 +7,8 @@ services:
       dockerfile: ./blinkapp/Dockerfile
     image: blink-img:latest
     restart: always
+    depends_on:
+        - mongo
     links:
       - mongo:mongo
     networks:
@@ -17,8 +19,10 @@ services:
     image: graphapp-client
     ports:
         - "3000:3000"
-    volumes:
-        - ./graphapp-client:/usr/src/app
+          #volumes:
+          #- ./graphapp-client:/usr/src/app
+    depends_on:
+        - graphapp-api
     links:
         - graphapp-api
     networks:
@@ -41,9 +45,9 @@ services:
   mongo:
     image: mongo
     restart: always
-    # environment:
-    #   MONGO_INITDB_ROOT_USERNAME_FILE: /var/run/secrets/mongouser.txt
-    #   MONGO_INITDB_ROOT_PASSWORD_FILE: /var/run/secrets/mongopassword.txt
+    #environment:
+    #  MONGO_INITDB_ROOT_USERNAME_FILE: /var/run/secrets/mongouser.txt
+    #  MONGO_INITDB_ROOT_PASSWORD_FILE: /var/run/secrets/mongopassword.txt
     command: [--auth]
     volumes:
       - mongodata:/data/db
@@ -75,5 +79,3 @@ volumes:
 networks:
   blinkappsnetwork:
     driver: bridge
-
- 
