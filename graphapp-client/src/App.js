@@ -39,7 +39,7 @@ class App extends Component {
 
   GetGraphData() {
     this.setState({ isLoading: true });
-    fetch("http://localhost:9000/getGraphData")
+    fetch("http://graphapp-api:9000/getGraphData")
         .then(response => {
           if (response.ok) {
             return response.json();
